@@ -15,3 +15,23 @@ jobs:
       uses: azure/setup-kubectl@v1
       with:
         version: 'latest'
+    - name: Authenticate and deploy to Kubernetes
+      env:
+        KUBECONFIG_FILE: ${{ secrets.KUBECONFIG }}
+        KUBE_NAMESPACE: testing
+      run: |
+        echo "$KUBECONFIG_FILE" > kubeconfig.yaml
+        kubectl config use-context kind-kind --kubeconfig=kubeconfig.yaml
+        kubectl apply --kubeconfig=kubeconfig.yaml --namespace=$KUBE_NAMESPACE -f nginx_deploy.yml
+    - name: Verify deployment status and notify on error
+      run: |
+        DEPLOYMENT_STATUS=$(kubectl rollout status deployment/nginx.yml --namespace=testing --timeout=2m --watch=false 2>&1)
+      if [ $? -ne 0 ]; then
+          echo "Deployment failed. Details:"
+          echo "$DEPLOYMENT_STATUS"
+          # Add any notification logic here, e.g., send an email or a message to Slack
+          exit 1
+        else
+          echo "Deployment succeeded. Details:"
+          kubectl get pods,svc,deploy -o wide --namespace=testing
+        fi
