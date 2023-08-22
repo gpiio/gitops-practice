@@ -26,7 +26,7 @@ jobs:
     - name: Verify deployment status and notify on error
       run: |
         DEPLOYMENT_STATUS=$(kubectl rollout status deployment/nginx.yml --namespace=testing --timeout=2m --watch=false 2>&1)
-      if [ $? -ne 0 ]; then
+        if [ $? -ne 0 ]; then
           echo "Deployment failed. Details:"
           echo "$DEPLOYMENT_STATUS"
           # Add any notification logic here, e.g., send an email or a message to Slack
